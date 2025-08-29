@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, uuid, boolean, integer, primaryKey } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, uuid, boolean, integer, primaryKey, serial, varchar } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
 // Users table
@@ -11,6 +11,21 @@ export const users = pgTable('users', {
   isActive: boolean('is_active').default(true).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+export const projects = pgTable('projects', {
+  id: serial('id').primaryKey(),
+  projectName: varchar('project_name', { length: 256 }).notNull(),
+  contractorName: varchar('contractor_name', { length: 256 }).notNull(),
+  contractorCompany: varchar('contractor_company', { length: 256 }),
+  ward: varchar('ward', { length: 256 }),
+  startDate: timestamp('start_date'),
+  endDate: timestamp('end_date'),
+  imageUrl: text('image_url'),
+  completion: integer('completion').default(0), // Added for dashboard integration
+  status: varchar('status', { length: 50 }).default('pending'), // Added for dashboard integration
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
 });
 
 // Roles table

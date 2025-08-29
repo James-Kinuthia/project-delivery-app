@@ -35,7 +35,7 @@ const navigationItems = [
     },
     {
         title: "Projects",
-        url: "/projects",
+        url: "/projects/new",
         icon: User,
     },
     {
