@@ -34,6 +34,19 @@ interface ProjectSectorData {
     ICT: number;
 }
 
+interface TooltipPayload {
+    color: string;
+    dataKey: string;
+    value: number | string;
+    payload?: any;
+}
+
+interface CustomTooltipProps {
+    active?: boolean;
+    payload?: TooltipPayload[];
+    label?: string;
+}
+
 // Dummy data matching your dashboard
 const projectStatusData: ProjectStatusData[] = [
     { status: 'Ongoing', count: 15, color: '#3B82F6' },
@@ -63,12 +76,12 @@ const projectSectorData: ProjectSectorData[] = [
 ];
 
 // Custom tooltip components
-const CustomTooltip = ({ active, payload, label }: any) => {
+const CustomTooltip: React.FC<CustomTooltipProps> = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
         return (
             <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
                 <p className="text-sm font-medium text-gray-900">{`${label}`}</p>
-                {payload.map((entry: any, index: number) => (
+                {payload.map((entry: TooltipPayload, index: number) => (
                     <p key={index} className="text-sm" style={{ color: entry.color }}>
                         {`${entry.dataKey}: ${entry.value}`}
                     </p>
