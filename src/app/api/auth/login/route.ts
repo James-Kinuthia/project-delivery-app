@@ -1,12 +1,12 @@
 // app/api/auth/login/route.ts
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db/db';
 import { users } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { email, password } = body;
@@ -18,6 +18,7 @@ export async function POST(request: Request) {
       );
     }
 
+    // Find user by email
     const [user] = await db
       .select()
       .from(users)
@@ -25,14 +26,22 @@ export async function POST(request: Request) {
       .limit(1);
 
     if (!user) {
-      return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
+      return NextResponse.json(
+        { error: 'Invalid credentials' },
+        { status: 401 }
+      );
     }
 
+    // Verify password
     const isValidPassword = await bcrypt.compare(password, user.password);
     if (!isValidPassword) {
-      return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
+      return NextResponse.json(
+        { error: 'Invalid credentials' },
+        { status: 401 }
+      );
     }
 
+    // Generate JWT token
     if (!process.env.JWT_SECRET) {
       throw new Error('JWT_SECRET is not defined');
     }
@@ -48,7 +57,7 @@ export async function POST(request: Request) {
       { expiresIn: '24h' }
     );
 
-    // Build response with user object
+    // Build response (return user only, not token in JSON)
     const response = NextResponse.json(
       {
         user: {
@@ -61,7 +70,7 @@ export async function POST(request: Request) {
       { status: 200 }
     );
 
-    // Set HttpOnly cookie (matches protected route's expectation)
+    // ✅ Set HttpOnly cookie with correct name
     response.cookies.set('auth_token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -73,6 +82,9 @@ export async function POST(request: Request) {
     return response;
   } catch (error) {
     console.error('Login error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
   }
 }
