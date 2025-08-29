@@ -4,8 +4,8 @@ import { AuthService } from '@/lib/auth-service';
 export async function GET(request: NextRequest) {
   try {
     // Get token from cookie or Authorization header
-    const token = request.cookies.get('auth_token')?.value || 
-                  request.headers.get('Authorization')?.replace('Bearer ', '');
+    const token = request.cookies.get('auth_token')?.value ||
+      request.headers.get('Authorization')?.replace('Bearer ', '');
 
     if (!token) {
       return NextResponse.json(
@@ -16,16 +16,16 @@ export async function GET(request: NextRequest) {
 
     // Get user from token
     const user = await AuthService.getUserFromToken(token);
-    
+
     if (!user) {
       return NextResponse.json(
         { message: 'Invalid token' },
-        
+
         { status: 401 }
       );
     }
 
-    return NextResponse.json(user);
+    return NextResponse.json({ user });
   } catch (error) {
     console.error('Get user error:', error);
     return NextResponse.json(
