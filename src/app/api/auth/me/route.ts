@@ -20,6 +20,7 @@ export async function GET(request: NextRequest) {
     if (!user) {
       return NextResponse.json(
         { message: 'Invalid token' },
+        
         { status: 401 }
       );
     }

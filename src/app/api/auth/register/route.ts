@@ -1,3 +1,4 @@
+// app/api/auth/register/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { AuthService } from '@/lib/auth-service';
 import { RegisterData } from '@/types/auth';
@@ -5,7 +6,7 @@ import { RegisterData } from '@/types/auth';
 export async function POST(request: NextRequest) {
   try {
     const body: RegisterData = await request.json();
-    
+
     // Validate request body
     if (!body.email || !body.password || !body.firstName || !body.lastName) {
       return NextResponse.json(
@@ -32,16 +33,18 @@ export async function POST(request: NextRequest) {
     }
 
     // Register user
-    const authResponse = await AuthService.register(body);
-    
-    // Set HTTP-only cookie
-    const response = NextResponse.json(authResponse);
-    response.cookies.set('auth_token', authResponse.token, {
+    const { user, token } = await AuthService.register(body);
+
+    // Build response with user object (no need to send token back in JSON)
+    const response = NextResponse.json({ user }, { status: 201 });
+
+    // Set HttpOnly cookie
+    response.cookies.set('auth_token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 60 * 60 * 24, // 24 hours
       path: '/',
+      maxAge: 60 * 60 * 24, // 24 hours
     });
 
     return response;

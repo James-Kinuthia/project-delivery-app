@@ -1,3 +1,4 @@
+// app/api/auth/login/route.ts
 import { NextResponse } from 'next/server';
 import { db } from '@/db/db';
 import { users } from '@/db/schema';
@@ -17,7 +18,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // Find user by email
     const [user] = await db
       .select()
       .from(users)
@@ -25,22 +25,14 @@ export async function POST(request: Request) {
       .limit(1);
 
     if (!user) {
-      return NextResponse.json(
-        { error: 'Invalid credentials' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
     }
 
-    // Verify password
     const isValidPassword = await bcrypt.compare(password, user.password);
     if (!isValidPassword) {
-      return NextResponse.json(
-        { error: 'Invalid credentials' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
     }
 
-    // Generate JWT token
     if (!process.env.JWT_SECRET) {
       throw new Error('JWT_SECRET is not defined');
     }
@@ -56,8 +48,8 @@ export async function POST(request: Request) {
       { expiresIn: '24h' }
     );
 
-    // Return success response
-    return NextResponse.json(
+    // Build response with user object
+    const response = NextResponse.json(
       {
         user: {
           id: user.id,
@@ -65,21 +57,22 @@ export async function POST(request: Request) {
           firstName: user.firstName,
           lastName: user.lastName,
         },
-        token,
       },
-      {
-        status: 200,
-        headers: {
-          'Set-Cookie': `token=${token}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${60 * 60 * 24 // 24 hours
-            }`,
-        },
-      }
+      { status: 200 }
     );
+
+    // Set HttpOnly cookie (matches protected route's expectation)
+    response.cookies.set('auth_token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 60 * 60 * 24, // 24 hours
+    });
+
+    return response;
   } catch (error) {
     console.error('Login error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
